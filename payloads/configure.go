@@ -88,6 +88,16 @@ type ConfigureLauncher struct {
 	MemoryLimit       bool     `yaml:"mem_limit"`
 }
 
+// ConfigureLauncherLegacy contains the unmarshalled legacy configuration
+// for the launcher service. The legacy configuration only takes one compute
+// and one management subnet at most.
+type ConfigureLauncherLegacy struct {
+	ComputeNetwork    string `yaml:"compute_net"`
+	ManagementNetwork string `yaml:"mgmt_net"`
+	DiskLimit         bool   `yaml:"disk_limit"`
+	MemoryLimit       bool   `yaml:"mem_limit"`
+}
+
 // ConfigureService contains the unmarshalled configurations for the resources
 // of the configurations.
 type ConfigureService struct {
@@ -95,9 +105,9 @@ type ConfigureService struct {
 	URL  string      `yaml:"url"`
 }
 
-// ConfigurePayload is a wrapper to read and unmarshall all posible
+// ConfigurePayload is a wrapper to read and unmarshall all possible
 // configurations for the following services: scheduler, controller, launcher,
-//  imaging and identity.
+// imaging and identity.
 type ConfigurePayload struct {
 	Scheduler       ConfigureScheduler  `yaml:"scheduler"`
 	Controller      ConfigureController `yaml:"controller"`
@@ -106,9 +116,29 @@ type ConfigurePayload struct {
 	IdentityService ConfigureService    `yaml:"identity_service"`
 }
 
+// ConfigurePayloadLegacy is a wrapper to read and unmarshall all possible
+// configurations for the following services: scheduler, controller, launcher,
+// imaging and identity.
+// The legacy part of this structure is on the launcher configuration. See
+// ConfigureLauncherLegacy.
+type ConfigurePayloadLegacy struct {
+	Scheduler       ConfigureScheduler      `yaml:"scheduler"`
+	Controller      ConfigureController     `yaml:"controller"`
+	Launcher        ConfigureLauncherLegacy `yaml:"launcher"`
+	ImageService    ConfigureService        `yaml:"image_service"`
+	IdentityService ConfigureService        `yaml:"identity_service"`
+}
+
 // Configure represents the SSNTP CONFIGURE command payload.
 type Configure struct {
 	Configure ConfigurePayload `yaml:"configure"`
+}
+
+// ConfigureLegacy represents the SSNTP CONFIGURE command legacy payload.
+// See ConfigureLauncherLegacy for an explanation about the difference between
+// the current and legacy payloads.
+type ConfigureLegacy struct {
+	Configure ConfigurePayloadLegacy `yaml:"configure"`
 }
 
 // InitDefaults initializes default vaulues for Configure structure.
@@ -119,4 +149,25 @@ func (conf *Configure) InitDefaults() {
 	conf.Configure.IdentityService.Type = Keystone
 	conf.Configure.Launcher.DiskLimit = true
 	conf.Configure.Launcher.MemoryLimit = true
+}
+
+func (conf *Configure) ConvertFromLegacy(legacyConf *ConfigureLegacy) {
+	conf.Configure.Scheduler = legacyConf.Configure.Scheduler
+	conf.Configure.Controller = legacyConf.Configure.Controller
+	conf.Configure.ImageService = legacyConf.Configure.ImageService
+	conf.Configure.IdentityService = legacyConf.Configure.IdentityService
+
+	conf.Configure.Launcher.DiskLimit = legacyConf.Configure.Launcher.DiskLimit
+	conf.Configure.Launcher.MemoryLimit = legacyConf.Configure.Launcher.MemoryLimit
+	if len(legacyConf.Configure.Launcher.ComputeNetwork) != 0 {
+		conf.Configure.Launcher.ComputeNetwork =
+			append(conf.Configure.Launcher.ComputeNetwork,
+				legacyConf.Configure.Launcher.ComputeNetwork)
+	}
+
+	if len(legacyConf.Configure.Launcher.ManagementNetwork) != 0 {
+		conf.Configure.Launcher.ManagementNetwork =
+			append(conf.Configure.Launcher.ManagementNetwork,
+				legacyConf.Configure.Launcher.ManagementNetwork)
+	}
 }

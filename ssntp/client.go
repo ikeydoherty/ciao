@@ -495,6 +495,7 @@ func (client *Client) UUID() string {
 // status frame or a CONFIGURE command one.
 func (client *Client) ClusterConfiguration() (payloads.Configure, error) {
 	var conf payloads.Configure
+	var legacyConf payloads.ConfigureLegacy
 
 	client.configuration.RLock()
 	defer client.configuration.RUnlock()
@@ -505,7 +506,13 @@ func (client *Client) ClusterConfiguration() (payloads.Configure, error) {
 
 	err := yaml.Unmarshal(client.configuration.configuration, &conf)
 	if err != nil {
-		return conf, err
+		err = yaml.Unmarshal(client.configuration.configuration, &legacyConf)
+		if err != nil {
+			return conf, err
+		}
+
+		// We received a legacy configuration, we convert the new one.
+		conf.ConvertFromLegacy(&legacyConf)
 	}
 
 	return conf, nil
