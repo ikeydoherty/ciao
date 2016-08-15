@@ -94,6 +94,74 @@ func TestConfigureMarshal(t *testing.T) {
 	}
 }
 
+func TestLegacyConfigureUnmarshal(t *testing.T) {
+	var cfg ConfigureLegacy
+
+	err := yaml.Unmarshal([]byte(testutil.ConfigureYamlLegacy), &cfg)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if cfg.Configure.ImageService.Type != Glance {
+		t.Errorf("Wrong image service type [%s]", cfg.Configure.ImageService.Type)
+	}
+
+	if cfg.Configure.IdentityService.Type != Keystone {
+		t.Errorf("Wrong identity service type [%s]", cfg.Configure.IdentityService.Type)
+	}
+
+	if cfg.Configure.Launcher.ManagementNetwork != testutil.MgmtNet {
+		t.Errorf("Wrong launcher management network %v", cfg.Configure.Launcher.ManagementNetwork)
+	}
+
+	if cfg.Configure.Launcher.ComputeNetwork != testutil.ComputeNet {
+		t.Errorf("Wrong launcher compute network %v", cfg.Configure.Launcher.ComputeNetwork)
+	}
+
+	if cfg.Configure.Scheduler.ConfigStorageType != Filesystem {
+		t.Errorf("Wrong scheduler storage type [%s]", cfg.Configure.Scheduler.ConfigStorageType)
+	}
+
+	p, _ := strconv.Atoi(testutil.ComputePort)
+	if cfg.Configure.Controller.ComputePort != p {
+		t.Errorf("Wrong controller compute port [%d]", cfg.Configure.Controller.ComputePort)
+	}
+}
+
+func TestLegacyConfigureMarshal(t *testing.T) {
+	var cfg ConfigureLegacy
+
+	cfg.Configure.ImageService.Type = Glance
+	cfg.Configure.ImageService.URL = testutil.GlanceURL
+
+	cfg.Configure.IdentityService.Type = Keystone
+	cfg.Configure.IdentityService.URL = testutil.KeystoneURL
+
+	cfg.Configure.Launcher.ComputeNetwork = testutil.ComputeNet
+	cfg.Configure.Launcher.ManagementNetwork = testutil.MgmtNet
+	cfg.Configure.Launcher.DiskLimit = false
+	cfg.Configure.Launcher.MemoryLimit = false
+
+	p, _ := strconv.Atoi(testutil.ComputePort)
+	cfg.Configure.Controller.ComputePort = p
+	cfg.Configure.Controller.HTTPSCACert = testutil.HTTPSCACert
+	cfg.Configure.Controller.HTTPSKey = testutil.HTTPSKey
+	cfg.Configure.Controller.IdentityUser = testutil.IdentityUser
+	cfg.Configure.Controller.IdentityPassword = testutil.IdentityPassword
+
+	cfg.Configure.Scheduler.ConfigStorageType = Filesystem
+	cfg.Configure.Scheduler.ConfigStorageURI = testutil.StorageURI
+
+	y, err := yaml.Marshal(&cfg)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if string(y) != testutil.ConfigureYamlLegacy {
+		t.Errorf("CONFIGURE marshalling failed\n[%s]\n vs\n[%s]", string(y), testutil.ConfigureYaml)
+	}
+}
+
 func TestConfigureStorageTypeString(t *testing.T) {
 	var stringTests = []struct {
 		s        StorageType

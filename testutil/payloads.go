@@ -354,6 +354,30 @@ const ConfigureYaml = `configure:
     url: ` + KeystoneURL + `
 `
 
+// ConfigureYaml is a sample CONFIGURE ssntp.Command payload for test cases
+const ConfigureYamlLegacy = `configure:
+  scheduler:
+    storage_type: file
+    storage_uri: ` + StorageURI + `
+  controller:
+    compute_port: ` + ComputePort + `
+    compute_ca: ` + HTTPSCACert + `
+    compute_cert: ` + HTTPSKey + `
+    identity_user: ` + IdentityUser + `
+    identity_password: ` + IdentityPassword + `
+  launcher:
+    compute_net: ` + ComputeNet + `
+    mgmt_net: ` + MgmtNet + `
+    disk_limit: false
+    mem_limit: false
+  image_service:
+    type: glance
+    url: ` + GlanceURL + `
+  identity_service:
+    type: keystone
+    url: ` + KeystoneURL + `
+`
+
 // DeleteFailureYaml is a sample workload DeleteFailure ssntp.Error payload for test cases
 const DeleteFailureYaml = `instance_uuid: ` + InstanceUUID + `
 reason: no_instance
