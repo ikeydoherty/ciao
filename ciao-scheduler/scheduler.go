@@ -1021,7 +1021,7 @@ func configSchedulerServer() (sched *ssntpSchedulerServer) {
 
 func main() {
 	flag.Parse()
-	osprepare.PrepareOsDeps(nil)
+	osprepare.PrepareOsDeps(schedDeps)
 
 	sched := configSchedulerServer()
 	if sched == nil {

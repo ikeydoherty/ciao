@@ -50,7 +50,8 @@ type PackageRequirement struct {
 // )
 type PackageRequirements map[string][]*PackageRequirement
 
-// Required for absolutely core functionality across all Ciao components
+// BootstrapRequirements lists required dependencies for absolutely core
+// functionality across all Ciao components
 var BootstrapRequirements = PackageRequirements{
 	"ubuntu": {
 		{"/usr/bin/cephfs", "ceph-fs-common"},
@@ -63,7 +64,7 @@ var BootstrapRequirements = PackageRequirements{
 
 // CollectPackages returns a list of non-installed packages from
 // the PackageRequirements received
-func collectPackages(dist distro, reqs *PackageRequirements) []string {
+func collectPackages(dist distro, reqs PackageRequirements) []string {
 	// For now just support keys like "ubuntu" vs "ubuntu:16.04"
 	var pkgsMissing []string
 	if reqs == nil {
@@ -71,7 +72,7 @@ func collectPackages(dist distro, reqs *PackageRequirements) []string {
 	}
 
 	id := dist.getID()
-	if pkgs, success := (*reqs)[id]; success {
+	if pkgs, success := reqs[id]; success {
 		for _, pkg := range pkgs {
 			// Have the path existing, skip.
 			if pathExists(pkg.BinaryName) {
@@ -85,14 +86,14 @@ func collectPackages(dist distro, reqs *PackageRequirements) []string {
 	return nil
 }
 
-// PrepareOsDeps installs all the dependencies defined in
-// PackageRequirements in order to run the ciao component
-func PrepareOsDeps(reqs *PackageRequirements) {
+// PrepareOsDeps installs all the dependencies defined in a component
+// specific PackageRequirements in order to enable running the component
+func PrepareOsDeps(reqs PackageRequirements) {
 	distro := getDistro()
 
 	if distro == nil {
 		fmt.Fprintf(os.Stderr, "Running on an unsupported distro\n")
-		if rel := GetOsRelease(); rel != nil {
+		if rel := getOSRelease(); rel != nil {
 			fmt.Fprintf(os.Stderr, "Unsupported distro: %s %s\n", rel.Name, rel.Version)
 		} else {
 			fmt.Fprintln(os.Stderr, "No os-release found on this host")
@@ -113,5 +114,5 @@ func PrepareOsDeps(reqs *PackageRequirements) {
 // Bootstrap installs all the core dependencies required to bootstrap the core
 // configuration of all Ciao components
 func Bootstrap() {
-	PrepareOsDeps(&BootstrapRequirements)
+	PrepareOsDeps(BootstrapRequirements)
 }
